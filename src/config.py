@@ -9,8 +9,23 @@ import os
 from pathlib import Path
 
 
-def _cuda_available() -> bool:
-    """检测 CUDA 运行时是否可用"""
+def _setup_cuda_dlls() -> bool:
+    """将 pip 安装的 nvidia DLL 目录加入搜索路径，返回是否成功"""
+    site_packages = Path(__file__).resolve().parent.parent / "venv" / "Lib" / "site-packages"
+    candidates = list(site_packages.glob("nvidia/*/bin"))
+    for d in candidates:
+        try:
+            os.add_dll_directory(str(d))
+        except OSError:
+            pass
+
+    if not candidates:
+        # 尝试系统 CUDA Toolkit 路径
+        for ver in ("v12.9", "v12.8", "v12.6", "v12.4", "v11.8"):
+            cuda_bin = Path(f"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/{ver}/bin")
+            if cuda_bin.exists():
+                os.add_dll_directory(str(cuda_bin))
+
     try:
         ctypes.CDLL("cublas64_12.dll")
         return True
@@ -24,7 +39,7 @@ def _cuda_available() -> bool:
     return False
 
 
-_IS_CUDA = _cuda_available()
+_IS_CUDA = _setup_cuda_dlls()
 
 # ---- 路径 ----
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
