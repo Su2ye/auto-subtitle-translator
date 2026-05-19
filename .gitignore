@@ -22,6 +22,7 @@ ffmpeg/
 Thumbs.db
 Desktop.ini
 
-# Build artifacts
+# Build artifacts (allow project spec file)
 *.exe
 *.msi
+!ThinkSub.spec
