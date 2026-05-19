@@ -19,13 +19,13 @@
 - [ ] 安装 ONNX Runtime（Silero VAD 推理）
 - [ ] 语言检测由 Whisper 内置分类头完成（无需 fastText）
 - [ ] 验证 GPU 可用：跑一段 3 秒音频测试 ASR（faster-whisper 直接跑）
-- [ ] 内置 FFmpeg 便携版到项目
+- [ ] 安装 FFmpeg（开发期用 winget 系统安装，打包期用便携版内置）
 - [ ] 锁定 requirements.txt（不含 torch、transformers）
 
 ### 0.2 模型准备
 - [ ] 下载 faster-whisper large-v3（英/韩 ASR）
 - [ ] 下载 kotoba-whisper v2.0 CTranslate2 版（日语 ASR）
-- [ ] 下载 Silero VAD ONNX 模型
+- [ ] 下载 Silero VAD ONNX 模型（推迟到 Phase 1，模型 ~2.3MB）
 - [ ] 语言检测由 Whisper 内置分类头完成，无需下载额外模型
 - [ ] 下载三组 OPUS-MT 模型，转换为 CTranslate2 格式
 - [ ] 编写模型下载/转换脚本 `scripts/prepare_models.py`
@@ -50,23 +50,26 @@
 
 ### 1.1 FFmpeg 音频提取
 - [ ] 编写 `audio_extractor.py`，封装 FFmpeg 调用
+- [ ] 编写 `utils/ffmpeg_utils.py`，FFmpeg/ffprobe 路径查找与视频信息读取
 - [ ] 输入：视频路径 → 输出：16kHz WAV
-- [ ] 支持 MP4/MKV/AVI/MOV 格式
-- [ ] 错误处理：文件不存在、音轨缺失、FFmpeg 未安装
+- [ ] 支持 MP4/MKV/AVI/MOV 格式（所有 FFmpeg 可解码格式自动支持）
+- [ ] 错误处理：文件不存在、FFmpeg 未安装、提取失败
 
 ### 1.2 Silero VAD 集成
-- [ ] 编写 `vad.py`，加载 Silero VAD ONNX 模型
+- [ ] 编写 `vad.py`，加载 Silero VAD ONNX 模型（`onnx-community/silero-vad`）
 - [ ] 输入：WAV numpy 数组 → 输出：语音段时间戳列表
+- [ ] 处理 VAD 模型的 stateful 推理（stateN 输出、sr 标量输入）
 - [ ] 参数可调：静音判定阈值、最小语音段长度
 
 ### 1.3 集成测试
-- [ ] 写一个脚本：输入视频路径 → 输出 WAV + 语音段数量
-- [ ] 测试素材：1 分钟英文视频、1 分钟日文视频
+- [ ] 编写 `scripts/test_phase1.py`，输入视频路径 → 输出 WAV + 语音段数量
+- [ ] 默认生成合成测试视频（5 秒正弦波 + 黑色画面）
+- [ ] 测试素材：接受命令行参数指定视频文件
 
 ### 验证标准
-- [ ] 提取的 WAV 可正常播放
-- [ ] VAD 能正确区分语音/静音段
-- [ ] 10 分钟视频提取音频 < 30 秒
+- [ ] 提取的 WAV 为 16kHz 单声道 PCM 格式
+- [ ] VAD 推理无错误，正确区分语音/非语音（正弦波概率 ≈ 0.02 = 非语音）
+- [ ] 10 分钟视频提取音频 < 30 秒（待更长视频实际测试）
 
 ---
 
