@@ -27,7 +27,7 @@
 - **ASR**：kotoba-whisper v2.0（日语）、Faster-Whisper large-v3（英/韩）
 - **翻译**：OPUS-MT（en/ja/ko → zh），CTranslate2 格式
 - **音频处理**：FFmpeg + Silero VAD (ONNX)
-- **语言检测**：fastText
+- **语言检测**：Whisper 内置分类头（零额外模型）
 
 ## 安装
 
@@ -77,7 +77,7 @@
 ### 开发环境搭建
 
 ```bash
-# Python 3.11
+# Python 3.11+
 python -m venv venv
 source venv/Scripts/activate  # Windows
 

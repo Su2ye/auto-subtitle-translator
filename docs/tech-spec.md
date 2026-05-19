@@ -23,7 +23,7 @@
 │                                                   │
 │  ① FFmpeg 提取音频 ──▶ 16kHz WAV                  │
 │  ② Silero VAD (ONNX) ──▶ 语音段时间戳              │
-│  ③ fastText ──▶ 语言标签 (ja/en/ko)                │
+│  ③ Whisper ──▶ 语言标签 (ja/en/ko)                │
 │  ④ ASR (CTranslate2) ──▶ 原文 + 时间戳              │
 │     ├─ ja → kotoba-whisper v2.0                   │
 │     └─ en/ko → faster-whisper large-v3             │
@@ -41,7 +41,7 @@
 |------|--------|--------|------|
 | ASR（语音识别） | faster-whisper → CTranslate2 | **不变**（faster-whisper 本身就是 CTranslate2） | — |
 | VAD（语音检测） | PyTorch → Silero VAD | **ONNX Runtime**（5MB） | 去 2.5GB |
-| 语言检测 | fastText Python bind | 纯 C++ wrapper | 不依赖 torch |
+| 语言检测 | Whisper 内置语言分类头 | 音频特征直接检测，复用 ASR 引擎 | 零额外依赖 |
 | 翻译 | transformers + PyTorch | OPUS-MT 模型 → CTranslate2 转换 | 去 2.5GB |
 
 转换命令（一次性的模型准备）：
@@ -61,7 +61,6 @@ ct2-transformers-converter --model Helsinki-NLP/opus-mt-en-zh \
 | ONNX Runtime | — | ~5 MB |
 | FFmpeg 最小构建 | 80 MB | ~25 MB |
 | numpy + soundfile + 其他 | 80 MB | ~50 MB |
-| fastText + binding | — | ~10 MB |
 | **核心合计** | **~3.1 GB** | **~290 MB** |
 
 ---
@@ -127,8 +126,7 @@ faster-whisper==1.1.1
 # VAD
 onnxruntime==1.21.0
 
-# 语言检测
-fasttext==0.9.3
+# 语言检测由 Whisper 内置分类头完成，无需额外依赖
 
 # 音频处理
 numpy==2.1.3
@@ -154,4 +152,4 @@ tqdm==4.67.1
 | GPU 显存峰值 | ~3 GB（加载一个 ASR 模型时） |
 | 操作系统 | Windows 10/11 |
 | GPU 要求 | NVIDIA GTX 1060+，显存 6GB+ |
-| Python 版本 | 3.11 |
+| Python 版本 | 3.14（关键包均支持） |

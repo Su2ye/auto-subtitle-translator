@@ -41,8 +41,9 @@ QUALITY_ASR_BEAM_SIZE = 5
 FAST_ASR_BEAM_SIZE = 2
 
 # ---- 硬件 ----
+# v1 仅支持 Windows + NVIDIA GPU（CUDA），不支持 CPU/Intel/macOS
 DEVICE = "cuda"
-COMPUTE_TYPE = "float16"       # GPU 用 float16, CPU 降级时用 int8
+COMPUTE_TYPE = "float16"
 
 # ---- 用户数据 ----
 APPDATA_DIR = Path(os.getenv("APPDATA", "")) / "ThinkSub"

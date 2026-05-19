@@ -1,12 +1,8 @@
-"""
-ThinkSub — 视频中文字幕生成工具
-"""
+"""ThinkSub — 视频中文字幕生成工具"""
 
 import sys
-from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt
 
 from src.gui.main_window import MainWindow
 

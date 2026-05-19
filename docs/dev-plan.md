@@ -14,10 +14,10 @@
 **目标**：开发环境就绪，不依赖 PyTorch，CTranslate2 统一引擎可用
 
 ### 0.1 Python 环境
-- [ ] 创建虚拟环境（Python 3.11）
+- [ ] 创建虚拟环境（Python 3.11+）
 - [ ] 安装 CTranslate2 + faster-whisper（CUDA 版）
 - [ ] 安装 ONNX Runtime（Silero VAD 推理）
-- [ ] 安装 fastText（语言检测）
+- [ ] 语言检测由 Whisper 内置分类头完成（无需 fastText）
 - [ ] 验证 GPU 可用：跑一段 3 秒音频测试 ASR（faster-whisper 直接跑）
 - [ ] 内置 FFmpeg 便携版到项目
 - [ ] 锁定 requirements.txt（不含 torch、transformers）
@@ -26,7 +26,7 @@
 - [ ] 下载 faster-whisper large-v3（英/韩 ASR）
 - [ ] 下载 kotoba-whisper v2.0 CTranslate2 版（日语 ASR）
 - [ ] 下载 Silero VAD ONNX 模型
-- [ ] 下载 fastText lid.176.bin
+- [ ] 语言检测由 Whisper 内置分类头完成，无需下载额外模型
 - [ ] 下载三组 OPUS-MT 模型，转换为 CTranslate2 格式
 - [ ] 编写模型下载/转换脚本 `scripts/prepare_models.py`
 
@@ -75,10 +75,10 @@
 **目标**：语音 → 原文文本，日语用 kotoba-whisper，英/韩用 large-v3
 
 ### 2.1 语言检测
-- [ ] 加载 fastText lid.176.bin
 - [ ] 编写 `language_detect.py`
-- [ ] 取前 30 秒音频检测，返回 ja / en / ko
-- [ ] 置信度低时（< 0.7）返回 "uncertain" 供 GUI 提示用户
+- [ ] 取前 30 秒音频，用 Whisper large-v3 内置分类头检测语言
+- [ ] 返回 ja / en / ko / "uncertain"（低置信度时提示用户手动指定）
+- [ ] 若检测为 ja，模型路由器切换为 kotoba-whisper
 
 ### 2.2 多模型 ASR 封装
 - [ ] 编写 `asr.py`，封装 ASR 路由器
