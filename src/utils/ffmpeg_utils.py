@@ -7,6 +7,9 @@ from pathlib import Path
 
 from src.config import FFMPEG_BIN, FFPROBE_BIN
 
+# Windows 系统默认 GBK，但 FFmpeg 输出是 UTF-8
+SUBPROCESS_KWARGS = {"encoding": "utf-8", "errors": "replace", "text": True}
+
 _winget_patterns = [
     "~/AppData/Local/Microsoft/WinGet/Links/ffmpeg.exe",
     "~/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_*/ffmpeg-*-full_build/bin/ffmpeg.exe",
@@ -42,7 +45,8 @@ def check_ffmpeg() -> bool:
     try:
         ffmpeg = find_ffmpeg()
         result = subprocess.run(
-            [ffmpeg, "-version"], capture_output=True, text=True, timeout=10
+            [ffmpeg, "-version"], capture_output=True, timeout=10,
+            **SUBPROCESS_KWARGS,
         )
         return result.returncode == 0
     except Exception:
@@ -58,7 +62,8 @@ def get_video_info(video_path: str | Path) -> dict:
             ffprobe, "-v", "quiet", "-print_format", "json",
             "-show_format", "-show_streams", str(video_path),
         ],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True, timeout=30,
+        **SUBPROCESS_KWARGS,
     )
 
     if result.returncode != 0:

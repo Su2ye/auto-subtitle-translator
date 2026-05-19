@@ -58,7 +58,8 @@ def burn_subtitles(
         ]
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=3600,
+            cmd, capture_output=True, timeout=3600,
+            encoding="utf-8", errors="replace", text=True,
             cwd=str(tmp_ass.parent),
         )
 
