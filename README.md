@@ -51,6 +51,7 @@
 
 - Windows 10/11
 - NVIDIA 显卡（GTX 1060+，显存 ≥ 6GB）
+- CUDA 运行时（`pip install nvidia-cublas-cu12 nvidia-cudnn-cu12`，~770MB）
 - 无需安装 Python 或 FFmpeg（已内置）
 
 ## 使用

@@ -6,36 +6,37 @@ ThinkSub 全局配置
 
 import ctypes
 import os
+import sys
 from pathlib import Path
 
 
 def _setup_cuda_dlls() -> bool:
-    """将 pip 安装的 nvidia DLL 目录加入搜索路径，返回是否成功"""
-    site_packages = Path(__file__).resolve().parent.parent / "venv" / "Lib" / "site-packages"
-    candidates = list(site_packages.glob("nvidia/*/bin"))
-    for d in candidates:
-        try:
-            os.add_dll_directory(str(d))
-        except OSError:
-            pass
+    """将 nvidia DLL 目录加入搜索路径（pip 安装或系统 CUDA Toolkit）"""
+    # pip 安装的 nvidia-* 在 venv/Lib/site-packages 下
+    project_root = Path(__file__).resolve().parent.parent
+    site_packages = project_root / "venv" / "Lib" / "site-packages"
+    if not site_packages.is_dir():
+        # 非开发环境（PyInstaller 打包后），从 python 所在路径找
+        site_packages = Path(sys.executable).parent.parent / "Lib" / "site-packages"
 
-    if not candidates:
-        # 尝试系统 CUDA Toolkit 路径
-        for ver in ("v12.9", "v12.8", "v12.6", "v12.4", "v11.8"):
-            cuda_bin = Path(f"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/{ver}/bin")
-            if cuda_bin.exists():
+    for d in site_packages.glob("nvidia/*/bin"):
+        os.add_dll_directory(str(d))
+
+    # 系统 CUDA Toolkit
+    cuda_root = Path("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA")
+    if cuda_root.is_dir():
+        for ver_dir in sorted(cuda_root.iterdir(), reverse=True):
+            cuda_bin = ver_dir / "bin"
+            if cuda_bin.is_dir():
                 os.add_dll_directory(str(cuda_bin))
+                break
 
-    try:
-        ctypes.CDLL("cublas64_12.dll")
-        return True
-    except OSError:
-        pass
-    try:
-        ctypes.CDLL("cublas64_11.dll")
-        return True
-    except OSError:
-        pass
+    for lib in ("cublas64_12.dll", "cublas64_11.dll"):
+        try:
+            ctypes.CDLL(lib)
+            return True
+        except OSError:
+            continue
     return False
 
 
