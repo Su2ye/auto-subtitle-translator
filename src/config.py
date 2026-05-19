@@ -60,12 +60,16 @@ WHISPER_FAST_MODEL = "medium"
 # 日语专用 ASR（CTranslate2 格式）
 KOTOBA_WHISPER_MODEL = "kotoba-tech/kotoba-whisper-v2.0-faster"
 
-# 翻译模型（CTranslate2 格式，本地路径）
-TRANSLATION_MODELS = {
-    "en": MODELS_DIR / "opus-mt-en-zh-faster",
-    "ja": MODELS_DIR / "opus-mt-ja-zh-faster",
-    "ko": MODELS_DIR / "opus-mt-ko-zh-faster",
+# 翻译模型（CTranslate2 格式，NLLB-200 一个模型覆盖全部语言）
+TRANSLATION_MODEL = MODELS_DIR / "nllb-200-faster"
+
+# NLLB-200 语言码映射（ISO 639-1 → BCP-47）
+NLLB_LANG_CODES = {
+    "ja": "jpn_Jpan",
+    "en": "eng_Latn",
+    "ko": "kor_Hang",
 }
+NLLB_TARGET_LANG = "zho_Hans"
 
 # ---- 处理参数 ----
 SAMPLE_RATE = 16000

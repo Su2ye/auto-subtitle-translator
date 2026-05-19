@@ -107,30 +107,33 @@
 
 ---
 
-## Phase 3 — 翻译模块（CTranslate2 引擎）
+## Phase 3 — 翻译模块（NLLB-200 + HF tokenizer）
 
-**目标**：日/英/韩文本 → 中文，CTranslate2 推理，不依赖 PyTorch
+**目标**：日/英/韩文本 → 中文，单模型直译，CTranslate2 推理
 
 ### 3.1 模型转换（一次性）
-- [ ] 下载三组 OPUS-MT HuggingFace 模型（en→zh, ja→zh, ko→zh）
-- [ ] 使用 ct2-transformers-converter 转换为 CTranslate2 格式（float16）
-- [ ] 写入 Phase 0 的 `scripts/prepare_models.py`
+- [ ] 下载 facebook/nllb-200-distilled-600M
+- [ ] 使用 ct2-transformers-converter 转换为 CTranslate2 格式（float16，~1.2GB）
+- [ ] 保存 HF tokenizer 文件到模型目录（tokenizer.json, tokenizer_config.json）
+- [ ] 更新 `scripts/prepare_models.py`
+
+> 注：Helsinki-NLP/OPUS-MT 没有直接的 ja→zh / ko→zh 模型，改用 NLLB-200。
 
 ### 3.2 翻译模块
-- [ ] 编写 `translator.py`，使用 CTranslate2 加载转换后的 OPUS-MT 模型
-- [ ] 根据语言标签路由到对应翻译模型
+- [ ] 编写 `translator.py`，CTranslate2 加载 NLLB-200，NllbTokenizerFast 处理语言 token
+- [ ] 单模型覆盖全部语言方向（en/ja/ko → zh），无需路由
 - [ ] 输入：源语言文本 + 语言标签 → 输出：中文文本
-- [ ] 支持批量翻译（合并多个 segment 一次推理，提升效率）
+- [ ] 支持批量翻译，target_prefix 强制中文解码
 
 ### 3.3 双语文本构造
-- [ ] 翻译后保留原文，构造双语结构：`{"original": "...", "chinese": "..."}`
+- [ ] `translate_segments()` 返回 `{"original": ..., "chinese": ...}` 结构
 - [ ] 每个 segment 同时持有原文和译文
 
 ### 验证标准
-- [ ] 日→中：假名/汉字混合句翻译准确（日语优先验证）
-- [ ] 英→中：语义通顺，无明显错译
-- [ ] 韩→中：日常对话翻译可读
-- [ ] 翻译模块不导入 torch
+- [ ] 日→中：假名/汉字混合句翻译准确 ✅（今日はいい天気ですね → 今天天气很好）
+- [ ] 英→中：语义通顺 ✅（Machine learning is changing the world → 机器学习正在改变世界）
+- [ ] 韩→中：日常对话翻译可读 ✅（오늘 날씨가 좋네요 → 今天天气很好）
+- [ ] 翻译模块不导入 torch ✅（torch 仅模型转换期使用，运行时仅 transformers tokenizer）
 
 ---
 

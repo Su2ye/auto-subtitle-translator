@@ -22,7 +22,6 @@ from src.config import (
     MODELS_DIR,
     WHISPER_MODEL,
     KOTOBA_WHISPER_MODEL,
-    TRANSLATION_MODELS,
     HF_ENDPOINT,
 )
 
@@ -34,30 +33,28 @@ LANG_MAP = {"1": "ja", "2": "en", "3": "ko"}
 # 模型大小常量（GB）
 KOTOBA_SIZE_GB = 1.5
 LARGE_V3_SIZE_GB = 3.0
-TRANSLATION_SIZE_GB = 0.3
+NLLB_SIZE_GB = 1.2
+
+# 翻译模型（共享一个 NLLB-200）
+TRANSLATION_HF = "facebook/nllb-200-distilled-600M"
+TRANSLATION_OUTPUT = MODELS_DIR / "nllb-200-faster"
 
 # 模型依赖声明
 LANGUAGE_DEPS = {
     "ja": {
         "asr": [KOTOBA_WHISPER_MODEL],
-        "translation": ["ja"],
+        "needs_translation": True,
     },
     "en": {
         "asr": [WHISPER_MODEL],
-        "translation": ["en"],
+        "needs_translation": True,
     },
     "ko": {
         "asr": [WHISPER_MODEL],
-        "translation": ["ko"],
+        "needs_translation": True,
     },
 }
 
-# OPUS-MT 原始 HF 模型
-OPUS_MT_HF = {
-    "en": "Helsinki-NLP/opus-mt-en-zh",
-    "ja": "Helsinki-NLP/opus-mt-ja-zh",
-    "ko": "Helsinki-NLP/opus-mt-ko-zh",
-}
 
 
 def download_whisper_model(model_name: str) -> bool:
@@ -73,29 +70,24 @@ def download_whisper_model(model_name: str) -> bool:
         return False
 
 
-def convert_opus_mt(lang: str) -> bool:
-    """将 OPUS-MT HF 模型转换为 CTranslate2 格式"""
-    hf_name = OPUS_MT_HF[lang]
-    output_dir = TRANSLATION_MODELS[lang]
-
-    if output_dir.exists():
-        print(f"  翻译模型已存在: {output_dir}")
+def convert_nllb() -> bool:
+    """将 NLLB-200 HF 模型转换为 CTranslate2 格式"""
+    if TRANSLATION_OUTPUT.exists():
+        print(f"  翻译模型已存在: {TRANSLATION_OUTPUT}")
         return True
 
-    print(f"  转换翻译模型: {hf_name} -> {output_dir}")
+    print(f"  转换翻译模型: {TRANSLATION_HF} -> {TRANSLATION_OUTPUT}")
     try:
         subprocess.run(
             [
-                sys.executable, "-m", "ctranslate2.convert",
-                "--model", hf_name,
-                "--output_dir", str(output_dir),
+                sys.executable, "-m", "ctranslate2.converters.transformers",
+                "--model", TRANSLATION_HF,
+                "--output_dir", str(TRANSLATION_OUTPUT),
                 "--quantization", "float16",
             ],
             check=True,
         )
-
-        # 清理 HF 缓存中的原始模型副本
-        _cleanup_hf_cache(hf_name)
+        _cleanup_hf_cache(TRANSLATION_HF)
         return True
     except subprocess.CalledProcessError as e:
         print(f"  转换失败: {e}")
@@ -119,18 +111,19 @@ def _cleanup_hf_cache(hf_model_name: str) -> None:
         pass  # 缓存清理失败不影响主流程
 
 
-def resolve_deps(languages: list[str]) -> tuple[set[str], set[str]]:
-    """解析语言选择 → 需要的 ASR 模型和翻译"""
+def resolve_deps(languages: list[str]) -> tuple[set[str], bool]:
+    """解析语言选择 → 需要的 ASR 模型和是否需要翻译模型"""
     asr_models: set[str] = set()
-    translation_langs: set[str] = set()
+    needs_translation = False
     for lang in languages:
         deps = LANGUAGE_DEPS[lang]
         asr_models.update(deps["asr"])
-        translation_langs.update(deps["translation"])
-    return asr_models, translation_langs
+        if deps["needs_translation"]:
+            needs_translation = True
+    return asr_models, needs_translation
 
 
-def _estimate_size(asr_models: set[str], translation_langs: set[str]) -> str:
+def _estimate_size(asr_models: set[str], needs_translation: bool) -> str:
     """估算下载大小"""
     size_gb = 0.0
     for m in asr_models:
@@ -140,7 +133,8 @@ def _estimate_size(asr_models: set[str], translation_langs: set[str]) -> str:
             size_gb += LARGE_V3_SIZE_GB
         else:
             size_gb += KOTOBA_SIZE_GB
-    size_gb += len(translation_langs) * TRANSLATION_SIZE_GB
+    if needs_translation:
+        size_gb += NLLB_SIZE_GB
     return f"{size_gb:.1f} GB"
 
 
@@ -204,12 +198,12 @@ def main():
         print("无有效选择，退出。")
         return
 
-    asr_models, translation_langs = resolve_deps(selected)
+    asr_models, needs_translation = resolve_deps(selected)
 
     print(f"\n语言: {', '.join(selected)}")
     print(f"ASR 模型: {', '.join(asr_models)}")
-    print(f"翻译模型: {', '.join(translation_langs)}")
-    print(f"预计下载大小: {_estimate_size(asr_models, translation_langs)}\n")
+    print(f"翻译模型: NLLB-200 (共享)")
+    print(f"预计下载大小: {_estimate_size(asr_models, needs_translation)}\n")
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -219,15 +213,14 @@ def main():
         if not download_whisper_model(m):
             print(f"  下载失败: {m}，请检查网络后重试。")
 
-    # 下载并转换翻译模型
+    # 下载并转换翻译模型（NLLB-200，所有语言共享一个）
     print("\n--- 翻译模型 ---")
     if not _install_converter_deps():
         print("  临时依赖安装失败，跳过翻译模型转换。")
         print("  请手动安装: pip install transformers torch sentencepiece")
         return
 
-    for lang in translation_langs:
-        convert_opus_mt(lang)
+    convert_nllb()
 
     print("\n模型准备完成。")
 

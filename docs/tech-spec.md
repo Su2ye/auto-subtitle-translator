@@ -128,18 +128,19 @@ onnxruntime==1.21.0
 
 # 语言检测由 Whisper 内置分类头完成，无需额外依赖
 
+# 翻译 tokenizer（NLLB 需要 HF tokenizer 注入语言 token）
+transformers>=4.47.0
+sentencepiece>=0.2.0
+
 # 音频处理
 numpy==2.1.3
 soundfile==0.12.1
 
 # 工具
 tqdm==4.67.1
-
-# 翻译模型转换工具（开发/安装期使用，非运行时）
-# ct2-transformers-converter（来自 huggingface_hub + transformers，安装阶段用后可选删除）
 ```
 
-> 注意：`torch`、`transformers`、`sentencepiece` **不在运行时依赖中**。仅在模型准备阶段用于将 OPUS-MT HuggingFace 模型转换为 CTranslate2 格式，转换完成后即可删除。
+> 注意：`torch` **不在运行时依赖中**。`transformers` 仅用于 NLLB-200 的 tokenizer（CPU），不走 GPU 推理。模型转换阶段额外需要 `torch`（转换完成后可删）。
 
 ---
 
