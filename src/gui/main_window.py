@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(500, 600)
         self.resize(WINDOW_W, WINDOW_H)
         self.setAcceptDrops(True)
+        self._load_icon()
 
         self._video_path: Path | None = None
         self._worker: PipelineWorker | None = None
@@ -36,6 +37,12 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(DARK_STYLE)
 
     # ---- UI 构建 ----
+
+    def _load_icon(self):
+        from PySide6.QtGui import QIcon
+        ico = Path(__file__).resolve().parent / "resources" / "icon.ico"
+        if ico.exists():
+            self.setWindowIcon(QIcon(str(ico)))
 
     def _init_ui(self):
         central = QWidget()
@@ -132,6 +139,20 @@ class MainWindow(QMainWindow):
         self._progress_label = QLabel("")
         self._progress_label.setStyleSheet("color: #A6ADC8; font-size: 11px;")
         v.addWidget(self._progress_label)
+
+        self._result_bar = QFrame()
+        self._result_bar.setObjectName("InfoCard")
+        self._result_bar.setVisible(False)
+        rv = QHBoxLayout(self._result_bar)
+        self._result_label = QLabel("")
+        self._result_label.setStyleSheet("color: #A6E3A1;")
+        rv.addWidget(self._result_label)
+        rv.addStretch()
+        self._open_btn = QPushButton("打开文件夹")
+        self._open_btn.setObjectName("SecondaryBtn")
+        self._open_btn.clicked.connect(self._on_open_folder)
+        rv.addWidget(self._open_btn)
+        v.addWidget(self._result_bar)
 
         return w
 
@@ -257,16 +278,25 @@ class MainWindow(QMainWindow):
 
         sub = result.get("subtitle")
         vid = result.get("video")
-        msg = "处理完成！"
+        self._result_paths = [str(Path(p).parent) for p in (sub, vid) if p]
+
+        parts = ["处理完成"]
         if sub:
-            msg += f"\n字幕: {Path(sub).name}"
+            parts.append(f"字幕: {Path(sub).name}")
         if vid:
-            msg += f"\n视频: {Path(vid).name}"
-        QMessageBox.information(self, "完成", msg)
+            parts.append(f"视频: {Path(vid).name}")
+        self._result_label.setText("  |  ".join(parts))
+        self._result_bar.setVisible(True)
+
+    def _on_open_folder(self):
+        if hasattr(self, "_result_paths") and self._result_paths:
+            import os
+            os.startfile(self._result_paths[0])
 
     def _on_error(self, msg: str):
         self._set_running(False)
-        QMessageBox.warning(self, "错误", msg)
+        self._progress_label.setText(f"错误: {msg}")
+        self._progress_label.setStyleSheet("color: #F38BA8; font-size: 11px;")
 
     def _set_running(self, running: bool):
         self._start_btn.setEnabled(not running)
