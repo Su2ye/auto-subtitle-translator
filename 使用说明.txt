@@ -1,0 +1,28 @@
+ThinkSub — 视频中文字幕生成工具
+
+使用方法
+========
+1. 双击 ThinkSub.exe 启动应用
+
+2. 首次使用需要准备工作:
+   a) 安装 FFmpeg（如已安装可跳过）:
+      在 PowerShell 中运行: winget install Gyan.FFmpeg
+   b) 下载翻译模型:
+      运行命令行: python scripts/prepare_models.py
+      选择需要的语言（日语/英语/韩语）
+
+3. 拖拽视频文件到窗口 → 设置选项 → 点击"开始处理"
+
+4. 输出文件在视频同目录下:
+   - .ass 文件 = 双语字幕（可用播放器加载）
+   - _sub.mp4 = 烧录字幕的视频（如选了烧录）
+
+注意
+====
+- 全部本地处理，不上传任何数据
+- 需要 NVIDIA 显卡（GTX 1060+, 6GB+）
+- 支持格式: MP4, MKV, AVI, MOV, WMV, FLV, WebM
+
+版本
+====
+ThinkSub v1.0
