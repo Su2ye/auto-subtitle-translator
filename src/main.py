@@ -2,6 +2,7 @@
 
 import sys
 
+from src.config import DEVICE, COMPUTE_TYPE  # 激活 CUDA DLL 路径
 from PySide6.QtWidgets import QApplication
 
 from src.gui.main_window import MainWindow
