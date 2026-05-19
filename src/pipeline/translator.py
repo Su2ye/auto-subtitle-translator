@@ -26,11 +26,10 @@ class Translator:
         self._tokenizer = NllbTokenizerFast.from_pretrained(
             str(TRANSLATION_MODEL)
         )
-        # 缓存目标语言前缀 token
+        # 缓存目标语言前缀 token（单元素模板，每 batch 复制）
         target_id = self._tokenizer.convert_tokens_to_ids(NLLB_TARGET_LANG)
-        self._target_prefix = [
+        self._target_tokens = \
             self._tokenizer.convert_ids_to_tokens([target_id])
-        ]
         self._last_src_code: str | None = None
 
     def translate(self, text: str, src_lang: str) -> str:
@@ -66,7 +65,7 @@ class Translator:
 
         results = self._model.translate_batch(
             batch_tokens,
-            target_prefix=self._target_prefix,
+            target_prefix=[self._target_tokens] * len(batch_tokens),
             beam_size=3,
             max_decoding_length=256,
         )
