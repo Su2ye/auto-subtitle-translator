@@ -72,7 +72,7 @@ class ASREngine:
             language=language,
             task="transcribe",
             beam_size=beam_size,
-            vad_filter=True,
+            vad_filter=False,  # VAD 由 pipeline/vad.py 单独处理
             condition_on_previous_text=False,
         )
 
