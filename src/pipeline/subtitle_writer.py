@@ -1,5 +1,6 @@
 """字幕文件生成 — 双语 SRT / ASS"""
 
+import re
 from pathlib import Path
 
 ASS_STYLE_HEADER = """[Script Info]
@@ -13,9 +14,7 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Original,Arial,22,&H00CCCCCC,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,0,2,60,60,30,1
-Style: Chinese,Microsoft YaHei,30,&H00FFFFFF,&H00000000,&H000000FF,&H80000000,0,0,0,0,100,100,0,0,1,2,0,2,60,60,10,0
-Style: BgBox,Microsoft YaHei,30,&H00FFFFFF,&H00000000,&H000000FF,&HDC000000,0,0,0,0,100,100,0,0,3,0,0,2,60,60,10,0
+Style: Chinese,Arial,30,&H00FFFFFF,&H00000000,&H000000FF,&H80000000,0,0,0,0,100,100,0,0,1,2,0,2,60,60,50,0
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -47,56 +46,35 @@ def write_srt(segments: list[dict], output_path: str | Path) -> Path:
 def write_ass(segments: list[dict], output_path: str | Path,
               video_width: int = 1920, video_height: int = 1080,
               position: str = "bottom") -> Path:
-    """
-    Args:
-        position: "bottom" | "top" — 字幕位置，顶部可避让已有底部字幕
-    """
     output_path = Path(output_path)
 
-    # 播放分辨率
     header = ASS_STYLE_HEADER.replace(
         "PlayResX: 1920\nPlayResY: 1080",
         f"PlayResX: {video_width}\nPlayResY: {video_height}",
     )
 
-    # 位置参数：底部 → Alignment=2(底中)，顶部 → Alignment=8(顶中)
-    v_margin = video_height // 12  # 距边缘距离
-    header = header.replace("MarginV, Encoding\nStyle: Original",
-                            f"MarginV, Encoding\nStyle: Original")
-    # 替换 MarginV
-    import re
-    header = re.sub(r"Style: Original,.*?MarginV,(\d+)",
-                    f"Style: Original,Arial,22,&H00CCCCCC,&H00000000,&H00000000,&H80000000,"
-                    f"0,0,0,0,100,100,0,0,1,1,0,2,60,60,{v_margin},1",
-                    header)
-    header = re.sub(r"Style: Chinese,.*?MarginV,(\d+)",
-                    f"Style: Chinese,Microsoft YaHei,30,&H00FFFFFF,&H00000000,&H000000FF,&H80000000,"
-                    f"0,0,0,0,100,100,0,0,1,2,0,2,60,60,{v_margin - 20},0",
-                    header)
-    header = re.sub(r"Style: BgBox,.*?MarginV,(\d+)",
-                    f"Style: BgBox,Microsoft YaHei,30,&H00FFFFFF,&H00000000,&H000000FF,&HDC000000,"
-                    f"0,0,0,0,100,100,0,0,3,0,0,2,60,60,{v_margin - 20},0",
-                    header)
-
-    if position == "top":
-        header = header.replace("Alignment, MarginL, MarginR, MarginV, Encoding",
-                                "Alignment, MarginL, MarginR, MarginV, Encoding")
-        # 顶部对齐需要改 Alignment: 2→8, 加上 MarginV 指向顶部
-        header = header.replace(",0,2,60,60,", ",0,8,60,60,")
+    v_margin = video_height // 12
+    header = re.sub(
+        r"Style: Chinese,.*",
+        f"Style: Chinese,Arial,30,&H00FFFFFF,&H00000000,&H000000FF,&H80000000,"
+        f"0,0,0,0,100,100,0,0,1,2,0,2,60,60,{v_margin},0",
+        header,
+    )
 
     events = []
     for seg in segments:
         start = _format_time(seg["start"], ass=True)
         end = _format_time(seg["end"], ass=True)
+        # 原文灰色（\c 内联颜色），中文白色 + 黑描边
         original = _escape_ass(seg["original"])
         chinese = _escape_ass(seg["chinese"])
-        # 电影式双语：原文一行，中文一行，半透明背景
+        # 电影式双语：原文一行，中文一行，内联样式避坑 FFmpeg \r 问题
         text = (
-            f"{{\\rOriginal}}{original}"
+            f"{{\\c&HCCCCCC&\\fs22}}{original}"
             f"{{\\N}}"
-            f"{{\\rChinese}}{chinese}"
+            f"{{\\c&HFFFFFF&\\3c&H000000&}}{chinese}"
         )
-        events.append(f"Dialogue: 0,{start},{end},BgBox,,0,0,0,,{text}")
+        events.append(f"Dialogue: 0,{start},{end},Chinese,,0,0,0,,{text}")
 
     content = header + "\n".join(events) + "\n"
     output_path.write_text(content, encoding="utf_8_sig")
