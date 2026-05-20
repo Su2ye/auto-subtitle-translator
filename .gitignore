@@ -26,3 +26,4 @@ Desktop.ini
 *.exe
 *.msi
 !ThinkSub.spec
+scripts/temp_b64.txt
