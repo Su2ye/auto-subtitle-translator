@@ -53,11 +53,16 @@ def write_ass(segments: list[dict], output_path: str | Path,
         f"PlayResX: {video_width}\nPlayResY: {video_height}",
     )
 
-    v_margin = video_height // 12
+    # 位置：Alignment 2=底部居中, 8=顶部居中；MarginV=离边缘距离
+    if position == "top":
+        align, margin_v = 8, 50
+    else:
+        align, margin_v = 2, video_height // 12
+
     header = re.sub(
         r"Style: Chinese,.*",
         f"Style: Chinese,Arial,30,&H00FFFFFF,&H00000000,&H000000FF,&H80000000,"
-        f"0,0,0,0,100,100,0,0,1,2,0,2,60,60,{v_margin},0",
+        f"0,0,0,0,100,100,0,0,1,2,0,{align},60,60,{margin_v},0",
         header,
     )
 
@@ -67,7 +72,6 @@ def write_ass(segments: list[dict], output_path: str | Path,
         end = _format_time(seg["end"], ass=True)
         original = _escape_ass(seg["original"])
         chinese = _escape_ass(seg["chinese"])
-        # 原文 22px 灰色在上，\N 换行，中文 30px 白色在下
         text = (
             f"{{\\fs22\\c&HCCCCCC&}}{original}"
             f"\\N"
