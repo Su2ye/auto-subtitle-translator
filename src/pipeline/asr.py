@@ -33,6 +33,23 @@ class ASRResult:
     text: str
 
 
+def _find_model_dir(name: str, root: "Path") -> str | None:
+    """在 root 及其子目录中查找匹配模型的目录"""
+    from pathlib import Path
+    root = Path(root)
+    if not root.is_dir():
+        return None
+    # 直接匹配
+    direct = root / name
+    if direct.is_dir():
+        return str(direct)
+    # 搜索子目录（HF cache 格式：org--repo）
+    for d in root.iterdir():
+        if d.is_dir() and (name in d.name or d.name.endswith(name)):
+            return str(d)
+    return None
+
+
 class ASREngine:
     """多语言 ASR 引擎"""
 
@@ -87,6 +104,11 @@ class ASREngine:
             return
         if self._model is not None:
             del self._model
+        # 先查 MODELS_DIR（含子目录），找不到用 HF 缓存
+        from src.config import MODELS_DIR
+        local = _find_model_dir(model_name, MODELS_DIR)
+        if local:
+            model_name = local
         self._model = WhisperModel(
             model_name, device=DEVICE, compute_type=COMPUTE_TYPE
         )

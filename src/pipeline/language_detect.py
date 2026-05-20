@@ -6,6 +6,7 @@ from faster_whisper import WhisperModel
 from src.config import (
     DEVICE,
     COMPUTE_TYPE,
+    MODELS_DIR,
     WHISPER_MODEL,
     SUPPORTED_LANGUAGES,
     LANGUAGE_DETECT_SECONDS,
@@ -23,7 +24,9 @@ def detect_language(
     Returns:
         "ja" | "en" | "ko" | "uncertain"
     """
-    model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=COMPUTE_TYPE)
+    from src.pipeline.asr import _find_model_dir
+    model_name = _find_model_dir(WHISPER_MODEL, MODELS_DIR) or WHISPER_MODEL
+    model = WhisperModel(model_name, device=DEVICE, compute_type=COMPUTE_TYPE)
 
     try:
         audio = audio.squeeze()
