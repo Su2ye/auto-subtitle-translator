@@ -15,6 +15,12 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("ThinkSub")
 
+    from src.gui.setup_wizard import check_models_ready, SetupWizard
+    if not check_models_ready():
+        wizard = SetupWizard()
+        if wizard.exec() != SetupWizard.Accepted:
+            return
+
     window = MainWindow()
     window.show()
 
