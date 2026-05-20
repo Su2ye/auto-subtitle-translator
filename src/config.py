@@ -48,8 +48,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # ---- 用户数据 ----
 APPDATA_DIR = Path(os.getenv("APPDATA", "")) / "ThinkSub"
 
-# 模型存到 APPDATA（exe 和源码共用，持久保留）
-MODELS_DIR = APPDATA_DIR / "models"
+# 模型存到 APPDATA（exe 和源码共用，持久保留），可通过 settings 自定义
+def _get_models_dir():
+    try:
+        import json
+        sf = APPDATA_DIR / "settings.json"
+        if sf.exists():
+            custom = json.loads(sf.read_text("utf-8")).get("model_path")
+            if custom:
+                return Path(custom)
+    except Exception:
+        pass
+    return APPDATA_DIR / "models"
+
+MODELS_DIR = _get_models_dir()
 
 FFMPEG_DIR = PROJECT_ROOT / "ffmpeg"
 FFMPEG_BIN = FFMPEG_DIR / "bin" / "ffmpeg.exe"

@@ -6,12 +6,12 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
-    QLabel, QPushButton, QProgressBar,
+    QLabel, QPushButton, QProgressBar, QLineEdit,
     QGroupBox, QRadioButton, QComboBox, QCheckBox,
     QFrame, QFileDialog, QMessageBox,
 )
 
-from src.config import TEMP_DIR
+from src.config import TEMP_DIR, MODELS_DIR, SETTINGS_FILE
 from src.gui.theme import DARK_STYLE
 from src.gui.worker import PipelineWorker
 
@@ -75,6 +75,7 @@ class MainWindow(QMainWindow):
         self._drop_hint.setAlignment(Qt.AlignCenter)
         v.addWidget(self._drop_hint)
         frame.mousePressEvent = self._on_click_select
+        self._load_settings()
         return frame
 
     def _info_card(self) -> QFrame:
@@ -127,6 +128,35 @@ class MainWindow(QMainWindow):
         h3.addWidget(QLabel("源语言:"))
         self._combo_lang = QComboBox()
         self._combo_lang.addItems(["自动检测", "日语", "英语", "韩语"])
+        h3.addWidget(self._combo_lang)
+        h3.addStretch()
+        v.addLayout(h3)
+
+        # 模型存放路径
+        h4 = QHBoxLayout()
+        h4.addWidget(QLabel("模型路径:"))
+        self._model_path_edit = QLineEdit()
+        self._model_path_edit.setText(str(MODELS_DIR))
+        self._model_btn = QPushButton("...")
+        self._model_btn.setObjectName("SecondaryBtn")
+        self._model_btn.setFixedWidth(36)
+        self._model_btn.clicked.connect(self._on_browse_model)
+        h4.addWidget(self._model_path_edit)
+        h4.addWidget(self._model_btn)
+        v.addLayout(h4)
+
+        # 视频输出路径
+        h5 = QHBoxLayout()
+        h5.addWidget(QLabel("输出路径:"))
+        self._output_path_edit = QLineEdit()
+        self._output_path_edit.setPlaceholderText("默认：视频同目录")
+        self._output_btn = QPushButton("...")
+        self._output_btn.setObjectName("SecondaryBtn")
+        self._output_btn.setFixedWidth(36)
+        self._output_btn.clicked.connect(self._on_browse_output)
+        h5.addWidget(self._output_path_edit)
+        h5.addWidget(self._output_btn)
+        v.addLayout(h5)
         h3.addWidget(self._combo_lang)
         h3.addStretch()
         v.addLayout(h3)
@@ -215,6 +245,44 @@ class MainWindow(QMainWindow):
         if path:
             self._load_video(Path(path))
 
+    def _on_browse_model(self):
+        d = QFileDialog.getExistingDirectory(self, "选择模型存放目录")
+        if d:
+            self._model_path_edit.setText(d)
+            self._save_settings()
+
+    def _on_browse_output(self):
+        d = QFileDialog.getExistingDirectory(self, "选择视频输出目录")
+        if d:
+            self._output_path_edit.setText(d)
+            self._save_settings()
+
+    def _load_settings(self):
+        import json
+        try:
+            if SETTINGS_FILE.exists():
+                data = json.loads(SETTINGS_FILE.read_text("utf-8"))
+                if data.get("model_path"):
+                    self._model_path_edit.setText(data["model_path"])
+                if data.get("output_path"):
+                    self._output_path_edit.setText(data["output_path"])
+        except Exception:
+            pass
+
+    def _save_settings(self):
+        import json
+        data = {}
+        try:
+            if SETTINGS_FILE.exists():
+                data = json.loads(SETTINGS_FILE.read_text("utf-8"))
+        except Exception:
+            pass
+        data["model_path"] = self._model_path_edit.text()
+        if self._output_path_edit.text():
+            data["output_path"] = self._output_path_edit.text()
+        SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        SETTINGS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), "utf-8")
+
     # ---- 视频加载 ----
 
     def _load_video(self, path: Path):
@@ -253,7 +321,7 @@ class MainWindow(QMainWindow):
         mode = "fast" if self._radio_fast.isChecked() else "quality"
         burn = self._radio_burn.isChecked()
 
-        output_dir = self._video_path.parent
+        output_dir = Path(self._output_path_edit.text() or str(self._video_path.parent))
         TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
         self._worker = PipelineWorker(
