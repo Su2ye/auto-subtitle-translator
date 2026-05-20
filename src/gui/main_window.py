@@ -92,12 +92,17 @@ class MainWindow(QMainWindow):
         g = QGroupBox("处理设置")
         v = QVBoxLayout(g)
 
+        from PySide6.QtWidgets import QButtonGroup
+
         # 输出类型
         h1 = QHBoxLayout()
         h1.addWidget(QLabel("输出类型:"))
         self._radio_sub = QRadioButton("字幕文件")
         self._radio_burn = QRadioButton("字幕 + 烧录")
         self._radio_sub.setChecked(True)
+        self._output_group = QButtonGroup(self)
+        self._output_group.addButton(self._radio_sub)
+        self._output_group.addButton(self._radio_burn)
         h1.addWidget(self._radio_sub)
         h1.addWidget(self._radio_burn)
         h1.addStretch()
@@ -109,6 +114,9 @@ class MainWindow(QMainWindow):
         self._radio_quality = QRadioButton("高质量")
         self._radio_fast = QRadioButton("快速")
         self._radio_quality.setChecked(True)
+        self._mode_group = QButtonGroup(self)
+        self._mode_group.addButton(self._radio_quality)
+        self._mode_group.addButton(self._radio_fast)
         h2.addWidget(self._radio_quality)
         h2.addWidget(self._radio_fast)
         h2.addStretch()

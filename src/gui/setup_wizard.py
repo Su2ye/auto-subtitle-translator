@@ -70,8 +70,9 @@ class DownloadWorker(QThread):
 
 
 def check_models_ready() -> bool:
-    """检查模型是否就绪"""
-    return TRANSLATION_MODEL.exists() and (MODELS_DIR / "silero_vad.onnx").exists()
+    """检查模型是否就绪（以 settings.json 为准）"""
+    from src.config import SETTINGS_FILE
+    return SETTINGS_FILE.exists() and TRANSLATION_MODEL.exists()
 
 
 class SetupWizard(QDialog):
