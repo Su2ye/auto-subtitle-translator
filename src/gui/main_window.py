@@ -39,10 +39,36 @@ class MainWindow(QMainWindow):
     # ---- UI 构建 ----
 
     def _load_icon(self):
-        from PySide6.QtGui import QIcon
-        ico = Path(__file__).resolve().parent / "resources" / "icon.ico"
-        if ico.exists():
-            self.setWindowIcon(QIcon(str(ico)))
+        import base64
+        from PySide6.QtGui import QIcon, QPixmap
+
+        b64 = (
+            "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAAFTUlEQVR4nO3UsQ1CQRBDQfqiu180KbSwmWU8"
+            "liY/rXTv9X4+X2DTK/0AIEcAYJgAwDABgGECAMMEAIYJAAwTABgmADBMAGCYAMAwAYBhAgDDBACGCQAMEwAY"
+            "JgAwTABgmADAMAGAYQIAwwQAhgkADBMAGCYAMEwAYJgAwDABgGECAMMEAIYJAAwTABgmADBMAGCYAMAwAYBh"
+            "AgDDBACGCQAMEwAYJgAwTABgmADAMAGAYQIAwwQAhgkADBMAGCYAMEwAYJgAwDABgGECAMMEAIYJAAwTABgm"
+            "ADBMAGCYAMAwAYBhAgDDBACGCQAMEwAYJgAwTABgmADAMAGAYQIAwwQAhgkADBMAGCYAMEwAYJgAwDABgGEC"
+            "AMMEAIYJAAwTABgmADBMAGCYAMCwmgCYNS39XwTALLj0fxEAs+DS/0UAzIJL/xcBMAsu/V8EwCy49H8RALPg"
+            "0v9FAMyCS/8XATALLv1fBMAsuPR/EQCz4NL/RQDMgkv/FwEwCy79XwTALLj0fxEAs+DS/0UAzIJL/xcBMAsu"
+            "/V8EwCy49H8RALPg0v9FAMyCS/8XATALLv1fBMAsuPR/EQCz4NL/RQDMgkv/FwEwCy79XwTALLj0fxEAs+DS"
+            "/0UAzIJL/xcBMAsu/V8EwCy49H8RALPg0v9FAMyCS/8XATALLv1fBMAsuPR/EQCz4NL/RQDMgkv/FwEwCy79"
+            "XwTALLj0fxEAs+DS/0UAzIJL/xcBMAsu/V8EwCy49H/5uwDQE8H0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+J"
+            "OwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo"
+            "0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0"
+            "nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgT"
+            "gCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCIt"
+            "S9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+J"
+            "OwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo"
+            "0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0"
+            "nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgT"
+            "gCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCItS9+JOwEo0rL0nbgTgCIt"
+            "S9+JOwGAYQIAwwQAhgkADBMAGCYAMEwAYJgAwDABgGECAMMEAIYJAAwTABgmADBMAGCYAMAwAYBhAgDDBACG"
+            "CQAMEwAYJgAwTABgmADAMAGAYQIAwwQAhgkADBMAGCYAMEwAYJgAwDABgGECAMMEAIYJAAwTABgmADBMAGCY"
+            "AMAwAYBhAgDPrh+OJSg40cuuAwAAAABJRU5ErkJggg=="
+        )
+        px = QPixmap()
+        px.loadFromData(base64.b64decode(b64), "PNG")
+        self.setWindowIcon(QIcon(px))
 
     def _init_ui(self):
         central = QWidget()
