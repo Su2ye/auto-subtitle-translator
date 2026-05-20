@@ -65,14 +65,13 @@ def write_ass(segments: list[dict], output_path: str | Path,
     for seg in segments:
         start = _format_time(seg["start"], ass=True)
         end = _format_time(seg["end"], ass=True)
-        # 原文灰色（\c 内联颜色），中文白色 + 黑描边
         original = _escape_ass(seg["original"])
         chinese = _escape_ass(seg["chinese"])
-        # 电影式双语：原文一行，中文一行，内联样式避坑 FFmpeg \r 问题
+        # 原文 22px 灰色在上，\N 换行，中文 30px 白色在下
         text = (
-            f"{{\\c&HCCCCCC&\\fs22}}{original}"
-            f"{{\\N}}"
-            f"{{\\c&HFFFFFF&\\3c&H000000&}}{chinese}"
+            f"{{\\fs22\\c&HCCCCCC&}}{original}"
+            f"\\N"
+            f"{{\\fs30\\c&HFFFFFF&\\3c&H000000&}}{chinese}"
         )
         events.append(f"Dialogue: 0,{start},{end},Chinese,,0,0,0,,{text}")
 
