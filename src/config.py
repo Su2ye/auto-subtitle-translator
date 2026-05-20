@@ -78,8 +78,8 @@ WHISPER_FAST_MODEL = "medium"
 # 日语专用 ASR（CTranslate2 格式）
 KOTOBA_WHISPER_MODEL = "kotoba-tech/kotoba-whisper-v2.0-faster"
 
-# 翻译模型（CTranslate2 格式，NLLB-200 一个模型覆盖全部语言）
-TRANSLATION_MODEL = MODELS_DIR / "nllb-200-faster"
+# 翻译模型（HuggingFace 格式，NLLB-200 一个模型覆盖全部语言）
+TRANSLATION_MODEL = MODELS_DIR / "nllb-200-hf"
 
 # NLLB-200 语言码映射（ISO 639-1 → BCP-47）
 NLLB_LANG_CODES = {
