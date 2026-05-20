@@ -29,54 +29,29 @@
 
 ## 下载与安装
 
-### 方法一：直接下载（推荐）
+### 直接下载（推荐）
 
 1. 从 [Releases](../../releases) 页面下载 `ThinkSub_v1.0.zip`
 2. 解压到任意目录
-3. 安装 FFmpeg（如已安装可跳过）：
-   ```powershell
-   winget install Gyan.FFmpeg
-   ```
-4. 准备翻译模型（见下方"模型下载"）
-5. 双击 `ThinkSub.exe` 启动
+3. 双击 `ThinkSub.exe` 启动
+4. 首次运行：勾选需要翻译的语言，自动下载模型
+5. 拖拽视频 → 开始处理
 
-### 方法二：从源码运行
+> 内置 FFmpeg，无需额外安装。
+
+### 从源码运行（开发者）
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/<用户名>/thinksub.git
+git clone https://github.com/Su2ye/thinksub.git
 cd thinksub
-
-# 2. 创建虚拟环境
 python -m venv venv
 venv\Scripts\activate
-
-# 3. 安装依赖
 pip install -r requirements.txt
-
-# 4. 安装 CUDA 运行时（如未安装 CUDA Toolkit）
 pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
-
-# 5. 准备模型（见下方"模型下载"）
-
-# 6. 启动
 python src/main.py
 ```
 
-## 模型下载
-
-翻译功能需要 AI 模型文件。首次使用前需要下载：
-
-```bash
-# 交互式选择语言
-python scripts/prepare_models.py
-
-# 或指定语言
-python scripts/prepare_models.py --ja --en   # 日语 + 英语
-python scripts/prepare_models.py --all        # 全部
-```
-
-模型大小参考：
+模型由应用在首次运行时自动下载。各语言所需大小参考：
 
 | 语言 | ASR 模型 | 翻译模型 | 合计 |
 |------|----------|----------|------|
@@ -120,11 +95,11 @@ python scripts/prepare_models.py --all        # 全部
 
 ## 常见问题
 
-**Q: "读取失败" 或 FFmpeg 报错？**  
-A: 请确保已安装 FFmpeg：`winget install Gyan.FFmpeg`，然后重启应用。
+**Q: "读取失败"？**  
+A: 视频文件可能损坏或编码格式不兼容。请确认视频可正常播放。
 
 **Q: 提示模型未找到？**  
-A: 请运行 `python scripts/prepare_models.py` 下载所需模型。
+A: 应用会在首次运行时自动下载模型。如已跳过，删除 `%APPDATA%\ThinkSub\settings.json` 重新打开即可触发下载。
 
 **Q: 处理很慢？**  
 A: 确保 GPU 推理已启用。如果提示 CPU 回退，请安装 CUDA 运行时：`pip install nvidia-cublas-cu12 nvidia-cudnn-cu12`。
