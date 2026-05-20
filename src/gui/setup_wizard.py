@@ -34,8 +34,6 @@ class DownloadWorker(QThread):
         import os
         os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
         from faster_whisper.utils import download_model as download_whisper
-        from huggingface_hub import snapshot_download
-        import subprocess, sys
 
         MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -59,34 +57,22 @@ class DownloadWorker(QThread):
             if kind == "asr":
                 download_whisper(repo, output_dir=str(MODELS_DIR))
             else:
-                out_dir = str(TRANSLATION_MODEL)
                 if not TRANSLATION_MODEL.exists():
-                    # 下载 HF 模型并转换（需要临时装 torch）
                     self.progress.emit(pct, f"下载 {label} (NLLB-200, 约1.2GB)")
-                    self._ensure_converter_deps()
-                    subprocess.run(
-                        [sys.executable, "-m", "ctranslate2.converters.transformers",
-                         "--model", repo, "--output_dir", out_dir,
-                         "--quantization", "float16"],
-                        check=True,
-                    )
-                    self._save_tokenizer(repo, out_dir)
+                    self._convert_nllb(repo, str(TRANSLATION_MODEL))
+                    self._save_tokenizer(repo, str(TRANSLATION_MODEL))
 
         self.progress.emit(95, "保存配置...")
         self._save_config()
         self.progress.emit(100, "完成")
 
-    def _ensure_converter_deps(self):
-        import subprocess, sys
-        try:
-            import torch, transformers, sentencepiece  # noqa
-        except ImportError:
-            self.progress.emit(0, "安装转换依赖...")
-            subprocess.run(
-                [sys.executable, "-m", "pip", "install",
-                 "torch", "transformers", "sentencepiece", "-q"],
-                check=True,
-            )
+    def _convert_nllb(self, hf_repo: str, out_dir: str):
+        """下载 HF 模型并转换为 CTranslate2 格式（在进程中直接调用）"""
+        from ctranslate2.converters.transformers import main as convert_main
+        import sys
+        sys.argv = ["ct2-convert", "--model", hf_repo,
+                    "--output_dir", out_dir, "--quantization", "float16"]
+        convert_main()
 
     def _save_tokenizer(self, repo: str, out_dir: str):
         import os
