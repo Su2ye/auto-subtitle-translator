@@ -44,7 +44,13 @@ _IS_CUDA = _setup_cuda_dlls()
 
 # ---- 路径 ----
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-MODELS_DIR = PROJECT_ROOT / "models"
+
+# ---- 用户数据 ----
+APPDATA_DIR = Path(os.getenv("APPDATA", "")) / "ThinkSub"
+
+# 模型存到 APPDATA（exe 和源码共用，持久保留）
+MODELS_DIR = APPDATA_DIR / "models"
+
 FFMPEG_DIR = PROJECT_ROOT / "ffmpeg"
 FFMPEG_BIN = FFMPEG_DIR / "bin" / "ffmpeg.exe"
 FFPROBE_BIN = FFMPEG_DIR / "bin" / "ffprobe.exe"
@@ -85,8 +91,6 @@ FAST_ASR_BEAM_SIZE = 2
 DEVICE = "cuda" if _IS_CUDA else "cpu"
 COMPUTE_TYPE = "float16" if _IS_CUDA else "int8"
 
-# ---- 用户数据 ----
-APPDATA_DIR = Path(os.getenv("APPDATA", "")) / "ThinkSub"
 SETTINGS_FILE = APPDATA_DIR / "settings.json"
 TEMP_DIR = Path(os.getenv("TEMP", "/tmp")) / "thinksub"
 
