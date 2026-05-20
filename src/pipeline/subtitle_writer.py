@@ -14,8 +14,8 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Original,Arial,14,&H00CCCCCC,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,0,2,40,40,80,1
-Style: Chinese,Microsoft YaHei,20,&H00FFFFFF,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1.5,0.5,2,40,40,40,1
+Style: Original,Arial,16,&H00CCCCCC,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,0,2,40,40,80,1
+Style: Chinese,Microsoft YaHei,26,&H00FFFFFF,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1.5,0.5,2,40,40,40,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
