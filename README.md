@@ -1,6 +1,6 @@
-# ThinkSub
+# Auto Subtitle Translator
 
-桌面端视频中文字幕生成工具 — 拖拽视频 → 自动生成中文字幕。
+桌面端视频中文字幕生成工具 — 拖拽视频 → 自动生成双语字幕。
 
 支持 **日语、英语、韩语** 视频，全部本地 GPU 处理，输出**双语字幕**（原文 + 中文翻译）。
 
@@ -42,7 +42,7 @@
 ### 从源码运行（开发者）
 
 ```bash
-git clone https://github.com/Su2ye/thinksub.git
+git clone https://github.com/Su2ye/auto-subtitle-translator.git
 cd thinksub
 python -m venv venv
 venv\Scripts\activate
