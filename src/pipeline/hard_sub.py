@@ -64,7 +64,12 @@ def burn_subtitles(
         )
 
         if result.returncode != 0:
-            raise RuntimeError(f"FFmpeg 烧录失败:\n{result.stderr[-500:]}")
+            err = result.stderr
+            # 查找关键错误行
+            for line in err.splitlines():
+                if "Error" in line or "error" in line or "failed" in line.lower():
+                    raise RuntimeError(f"FFmpeg 烧录失败: {line.strip()}")
+            raise RuntimeError(f"FFmpeg 烧录失败 (返回码={result.returncode})\n{err[-300:]}")
     finally:
         tmp_ass.unlink(missing_ok=True)
 
