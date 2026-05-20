@@ -33,32 +33,67 @@ class DownloadWorker(QThread):
     def _download(self):
         import os
         os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+        from faster_whisper.utils import download_model as download_whisper
         from huggingface_hub import snapshot_download
+        import subprocess, sys
 
-        tasks: list[tuple[str, str | None]] = []
-        # ASR models
-        if "ja" in self._langs:
-            tasks.append((KOTOBA_WHISPER_MODEL, "日语 ASR"))
-        if "en" in self._langs or "ko" in self._langs:
-            if "en" in self._langs and "ko" not in self._langs:
-                pass  # label below
-            tasks.append((WHISPER_MODEL, "英/韩 ASR"))
-
-        # Translation model (shared)
-        tasks.append((TRANSLATION_MODEL.name, "翻译"))
-
-        total = len(tasks)
         MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-        for i, (repo, label) in enumerate(tasks):
+        tasks: list[tuple] = []
+
+        # ASR 模型：用 faster-whisper 的 download 函数
+        if "ja" in self._langs:
+            tasks.append(("asr", KOTOBA_WHISPER_MODEL, "日语 ASR"))
+        if "en" in self._langs or "ko" in self._langs:
+            tasks.append(("asr", WHISPER_MODEL, "英/韩 ASR"))
+
+        # 翻译模型：用正确的 HF repo ID
+        tasks.append(("translation", "facebook/nllb-200-distilled-600M", "翻译"))
+
+        total = len(tasks)
+
+        for i, (kind, repo, label) in enumerate(tasks):
             pct = int(i / total * 90)
-            self.progress.emit(pct, f"下载 {label} ({repo})")
-            snapshot_download(repo, local_dir=str(MODELS_DIR),
-                              max_workers=4)
+            self.progress.emit(pct, f"下载 {label} ...")
+
+            if kind == "asr":
+                download_whisper(repo, output_dir=str(MODELS_DIR))
+            else:
+                out_dir = str(TRANSLATION_MODEL)
+                if not TRANSLATION_MODEL.exists():
+                    # 下载 HF 模型并转换（需要临时装 torch）
+                    self.progress.emit(pct, f"下载 {label} (NLLB-200, 约1.2GB)")
+                    self._ensure_converter_deps()
+                    subprocess.run(
+                        [sys.executable, "-m", "ctranslate2.converters.transformers",
+                         "--model", repo, "--output_dir", out_dir,
+                         "--quantization", "float16"],
+                        check=True,
+                    )
+                    self._save_tokenizer(repo, out_dir)
 
         self.progress.emit(95, "保存配置...")
         self._save_config()
         self.progress.emit(100, "完成")
+
+    def _ensure_converter_deps(self):
+        import subprocess, sys
+        try:
+            import torch, transformers, sentencepiece  # noqa
+        except ImportError:
+            self.progress.emit(0, "安装转换依赖...")
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install",
+                 "torch", "transformers", "sentencepiece", "-q"],
+                check=True,
+            )
+
+    def _save_tokenizer(self, repo: str, out_dir: str):
+        import os
+        os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+        from transformers import NllbTokenizerFast
+        tok = NllbTokenizerFast.from_pretrained(repo)
+        tok.save_pretrained(out_dir)
 
     def _save_config(self):
         import json
