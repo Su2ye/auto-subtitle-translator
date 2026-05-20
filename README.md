@@ -120,6 +120,8 @@ A: 使用支持 UTF-8 的播放器（如 PotPlayer, MPC-BE, VLC），并加载 `
 
 详见 [CLAUDE.md](CLAUDE.md)。
 
+更新日志见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## License
 
 MIT
