@@ -13,7 +13,6 @@ from PySide6.QtWidgets import (
 
 from src.config import TEMP_DIR, MODELS_DIR, SETTINGS_FILE
 from src.gui.theme import DARK_STYLE
-from src.gui.worker import PipelineWorker
 
 
 WINDOW_W = 640
@@ -350,6 +349,8 @@ class MainWindow(QMainWindow):
     def _on_start(self):
         if not self._video_path:
             return
+
+        from src.gui.worker import PipelineWorker  # 延迟导入，避免启动卡顿
 
         lang_map = {"自动检测": None, "日语": "ja", "英语": "en", "韩语": "ko"}
         lang = lang_map.get(self._combo_lang.currentText())
