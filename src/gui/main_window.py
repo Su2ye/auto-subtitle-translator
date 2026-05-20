@@ -171,6 +171,15 @@ class MainWindow(QMainWindow):
         h4.addWidget(self._model_btn)
         v.addLayout(h4)
 
+        # 字幕位置
+        h_pos = QHBoxLayout()
+        h_pos.addWidget(QLabel("字幕位置:"))
+        self._combo_position = QComboBox()
+        self._combo_position.addItems(["底部（默认）", "顶部（视频有原字幕时）"])
+        h_pos.addWidget(self._combo_position)
+        h_pos.addStretch()
+        v.addLayout(h_pos)
+
         # 视频输出路径
         h5 = QHBoxLayout()
         h5.addWidget(QLabel("输出路径:"))
@@ -346,6 +355,7 @@ class MainWindow(QMainWindow):
         lang = lang_map.get(self._combo_lang.currentText())
         mode = "fast" if self._radio_fast.isChecked() else "quality"
         burn = self._radio_burn.isChecked()
+        position = "top" if "顶部" in self._combo_position.currentText() else "bottom"
 
         output_dir = Path(self._output_path_edit.text() or str(self._video_path.parent))
         TEMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -353,6 +363,7 @@ class MainWindow(QMainWindow):
         self._worker = PipelineWorker(
             str(self._video_path), str(output_dir),
             output_type="ass", mode=mode, language=lang, burn=burn,
+            subtitle_position=position,
         )
         self._worker.progress.connect(self._on_progress)
         self._worker.finished.connect(self._on_finished)

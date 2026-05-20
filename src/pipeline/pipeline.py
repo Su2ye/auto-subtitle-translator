@@ -31,6 +31,7 @@ class PipelineRunner:
         mode: str,              # "quality" | "fast"
         language: str | None,   # "ja" | "en" | "ko" | None (auto)
         burn: bool = False,
+        subtitle_position: str = "bottom",
         progress_cb=None,
     ) -> dict:
         """
@@ -101,7 +102,8 @@ class PipelineRunner:
 
         sub_output = output_dir / f"{video_path.stem}.ass"
         sub_output = write_subtitles(bilingual, sub_output, fmt="ass",
-                                     video_width=vw, video_height=vh)
+                                     video_width=vw, video_height=vh,
+                                     position=subtitle_position)
         if output_type == "srt":
             sub_output = write_subtitles(bilingual,
                                          output_dir / f"{video_path.stem}.srt",

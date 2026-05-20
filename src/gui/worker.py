@@ -15,7 +15,8 @@ class PipelineWorker(QThread):
 
     def __init__(self, video_path: str, output_dir: str,
                  output_type: str = "ass", mode: str = "quality",
-                 language: str | None = None, burn: bool = False):
+                 language: str | None = None, burn: bool = False,
+                 subtitle_position: str = "bottom"):
         super().__init__()
         self._video = Path(video_path)
         self._output = Path(output_dir)
@@ -23,6 +24,7 @@ class PipelineWorker(QThread):
         self._mode = mode
         self._language = language
         self._burn = burn
+        self._position = subtitle_position
         self._runner = PipelineRunner()
 
     def run(self):
@@ -32,6 +34,7 @@ class PipelineWorker(QThread):
                 self._output_type, self._mode,
                 self._language, self._burn,
                 progress_cb=self._on_progress,
+                subtitle_position=self._position,
             )
             if result:
                 self.finished.emit(result)
