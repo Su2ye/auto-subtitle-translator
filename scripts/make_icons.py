@@ -1,55 +1,58 @@
-"""生成 ThinkSub 应用图标（纯 Python，不依赖 PySide6）"""
+"""生成 ThinkSub 应用图标 — 蓝色大写 T"""
+
 import struct
 import zlib
 from pathlib import Path
 
 
 def make_png(size: int) -> bytes:
-    """生成 Indigo 底色 + 白色对话气泡图标"""
+    """生成蓝色圆角方形 + 白色 T 的 PNG"""
 
     def pack_chunk(chunk_type, data):
         c = chunk_type + data
         return struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
 
     header = b"\x89PNG\r\n\x1a\n"
-    ihdr = b"".join([
-        struct.pack(">I", size),
-        struct.pack(">I", size),
-        b"\x08\x02",
-        b"\x00\x00\x00",
-    ])
+    ihdr = struct.pack(">II", size, size) + b"\x08\x02\x00\x00\x00"
 
     raw_rows = []
-    m = size // 8
-    for y in range(size):
-        raw_rows.append(b"\x00")  # filter none
-        for x in range(size):
-            # 气泡区域（圆角矩形 + 尾部三角）
-            in_bubble = False
-            bx, bw = m, size - 2 * m
-            by_top, by_bot = m, m + size * 3 // 4
-            if bx <= x < bx + bw and by_top <= y < by_bot:
-                in_bubble = True
-            # 尾巴三角
-            cx = size // 2
-            tail_h = size // 8
-            tail_top = by_bot
-            if y >= tail_top and abs(x - cx) < (size // 4) * (1 - (y - tail_top) / tail_h):
-                in_bubble = True
-            # 字幕线（灰色细线）
-            on_line = False
-            line_y = size // 3
-            for i in range(3):
-                ly = line_y + i * size // 6
-                if abs(y - ly) <= 1 and size // 4 <= x < size * 3 // 4:
-                    on_line = True
+    m = size // 6
+    t_bar_top = m * 2
+    t_bar_bot = t_bar_top + m
+    t_stem_left = size // 2 - m // 2
+    t_stem_right = size // 2 + m // 2
+    t_stem_bot = size - m
 
-            if in_bubble:
-                raw_rows[-1] += b"\xff\xff\xff\xff"  # 白色
-            elif on_line:
-                raw_rows[-1] += b"\xa0\xa0\xa0\xff"  # 灰色
+    for y in range(size):
+        raw_rows.append(b"\x00")  # filter byte
+        for x in range(size):
+            # 圆角方形蓝色背景
+            in_bg = True
+            r = size // 8
+            if x < r and y < r and (x - r) ** 2 + (y - r) ** 2 > r * r:
+                in_bg = False
+            if x >= size - r and y < r and (x - (size - r - 1)) ** 2 + (y - r) ** 2 > r * r:
+                in_bg = False
+            if x < r and y >= size - r and (x - r) ** 2 + (y - (size - r - 1)) ** 2 > r * r:
+                in_bg = False
+            if x >= size - r and y >= size - r and (x - (size - r - 1)) ** 2 + (y - (size - r - 1)) ** 2 > r * r:
+                in_bg = False
+
+            # T 字母区域
+            in_t = False
+            # 横杠
+            if t_bar_top <= y < t_bar_bot and m <= x < size - m:
+                in_t = True
+            # 竖杠
+            if t_stem_left <= x < t_stem_right and t_bar_bot <= y < t_stem_bot:
+                in_t = True
+
+            if in_t:
+                raw_rows[-1] += b"\xff\xff\xff\xff"  # 白色 T
+            elif in_bg:
+                raw_rows[-1] += b"\x1e\x66\xf5\xff"  # 蓝色底
             else:
-                raw_rows[-1] += b"\x4f\x46\xe5\xff"  # Indigo
+                raw_rows[-1] += b"\x00\x00\x00\x00"  # 透明
 
     raw_data = b"".join(raw_rows)
     idat = pack_chunk(b"IDAT", zlib.compress(raw_data))
@@ -63,15 +66,15 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     for sz in [16, 32, 48, 128, 256]:
-        png = make_png(sz)
-        (out / f"icon_{sz}.png").write_bytes(png)
+        b = make_png(sz)
+        (out / f"icon_{sz}.png").write_bytes(b)
         print(f"  {sz}x{sz}")
 
-    # ICO（256x256 → width/height 填 0）
-    png_data = make_png(256)
+    # ICO
+    png = make_png(256)
     ico = struct.pack("<HHH", 0, 1, 1)
-    ico += struct.pack("<BBBBHHII", 0, 0, 0, 0, 1, 32, len(png_data), 22)
-    ico += png_data
+    ico += struct.pack("<BBBBHHII", 0, 0, 0, 0, 1, 32, len(png), 22)
+    ico += png
     (out / "icon.ico").write_bytes(ico)
     print("  icon.ico")
 
